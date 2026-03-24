@@ -1,23 +1,38 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-
-const rescueRoutes = require("./routes/rescueRoutes");
-const eventRoutes = require("./routes/eventRoutes");
+const express = require('express');
+const cors = require('cors');
+const mysql = require('mysql2');
+const rescueRoutes = require('./routes/rescueRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// routes
-app.use("/api/rescue", rescueRoutes);
-app.use("/api/events", eventRoutes);
+// MySQL connection
+const db = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: '1234',
+    database: 'strayhaven'
+});
 
-// DB connect
-mongoose.connect("mongodb://127.0.0.1:27017/strayhaven")
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.log(err));
+db.connect(err => {
+    if (err) {
+        console.error('MySQL connection error:', err);
+    } else {
+        console.log('MySQL connected');
+    }
+});
 
-// server
-app.listen(5000, () => console.log("Server running on port 5000"));
+// Pass db to routes
+app.use((req, res, next) => {
+    req.db = db;
+    next();
+});
+
+app.use('/api/rescue', rescueRoutes);
+app.use('/api/event', eventRoutes);
+
+app.listen(5000, () => {
+    console.log('Server running on port 5000');
+});
