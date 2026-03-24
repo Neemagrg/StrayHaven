@@ -1,42 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Stray Haven - Rescue</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>StrayHaven</title>
 </head>
 <body>
 
-<h1>🐾 Stray Haven - Rescue</h1>
+    <h1>🐾 StrayHaven</h1>
 
-<!-- Rescue Form -->
-<h2>Report a Rescue</h2>
-<form id="rescueForm">
-  <input type="text" id="name" placeholder="Your Name" required><br>
-  <input type="text" id="phone" placeholder="Phone" required><br>
-  <input type="text" id="location" placeholder="Location" required><br>
-  <textarea id="description" placeholder="Describe the situation"></textarea><br>
-  <button type="submit">Submit</button>
-</form>
+    <!-- ================= RESCUE FORM ================= -->
+    <h2>Rescue Form</h2>
+    <form id="rescueForm">
+        <input type="text" id="name" placeholder="Name" required><br><br>
+        <input type="text" id="phone" placeholder="Phone" required><br><br>
+        <input type="text" id="location" placeholder="Location" required><br><br>
+        <textarea id="description" placeholder="Describe the situation"></textarea><br><br>
+        <button type="submit">Submit Rescue</button>
+    </form>
 
-<hr>
+    <hr>
 
-<!-- Events Display -->
-<h2>Events & Campaigns</h2>
-<div id="events"></div>
+    <!-- ================= EVENT FORM ================= -->
+    <h2>Add Event</h2>
+    <form id="eventForm">
+        <input type="text" id="title" placeholder="Event Title" required><br><br>
+        <input type="date" id="date" required><br><br>
+        <textarea id="desc" placeholder="Event Description"></textarea><br><br>
+        <button type="submit">Add Event</button>
+    </form>
 
-<hr>
+    <hr>
 
-<!-- Add Event -->
-<h2>Add Event (Admin)</h2>
-<form id="eventForm">
-  <input type="text" id="title" placeholder="Event Title" required><br>
-  <input type="date" id="date" required><br>
+    <!-- ================= EVENT LIST ================= -->
+    <h2>Events</h2>
+    <div id="events"></div>
 
-  <textarea id="desc" placeholder="Description"></textarea><br>
-  <button type="submit">Add Event</button>
-</form>
+    <!-- ================= SCRIPT ================= -->
+    <script>
+        // RESCUE FORM
+        const rescueForm = document.getElementById('rescueForm');
+        rescueForm.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-<script src="script.js"></script>
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const location = document.getElementById('location').value;
+            const description = document.getElementById('description').value;
+
+            fetch('http://localhost:5000/api/rescue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone, location, message: description })
+            })
+            .then(res => res.text())
+            .then(data => {
+                alert(data);
+                rescueForm.reset();
+            })
+            .catch(err => console.error(err));
+        });
+
+        // EVENT FORM
+        const eventForm = document.getElementById('eventForm');
+        eventForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const date = document.getElementById('date').value;
+            const desc = document.getElementById('desc').value;
+
+            fetch('http://localhost:5000/api/event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, date, description: desc, location: 'N/A' })
+            })
+            .then(res => res.text())
+            .then(data => {
+                alert(data);
+                eventForm.reset();
+                loadEvents();
+            })
+            .catch(err => console.error(err));
+        });
+
+        // LOAD EVENTS
+        function loadEvents() {
+            const eventsDiv = document.getElementById('events');
+            eventsDiv.innerHTML = '<p>Loading events...</p>';
+
+            fetch('http://localhost:5000/api/event')
+            .then(res => res.json())
+            .then(events => {
+                if(events.length === 0) {
+                    eventsDiv.innerHTML = '<p>No events found.</p>';
+                    return;
+                }
+
+                eventsDiv.innerHTML = '';
+                events.forEach(ev => {
+                    const eventEl = document.createElement('div');
+                    eventEl.innerHTML = `
+                        <h3>${ev.title}</h3>
+                        <p><strong>Date:</strong> ${ev.date}</p>
+                        <p>${ev.description}</p>
+                        <hr>
+                    `;
+                    eventsDiv.appendChild(eventEl);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                eventsDiv.innerHTML = '<p>Error loading events.</p>';
+            });
+        }
+
+        // Load on start
+        loadEvents();
+    </script>
 
 </body>
 </html>
